@@ -168,18 +168,80 @@ with tab1:
 
     cost_weight = calculate_cost_weight(material_cost, manufacturing_cost, maintenance_cost, energy_consumption)
 
+
+    # ISO-related sub-parameters
+    st.write(translate_text("Enter values for ISO-related parameters (1-10):", selected_language))
+    compliance_standards = st.number_input(translate_text("Compliance Standards", selected_language), min_value=1, max_value=10,
+                                    value=5, key="gripper_Compliance_Standards")
+    material_safety = st.number_input(translate_text("Material Safety", selected_language), min_value=1,
+                                         max_value=10, value=5, key="material_safety")
+
+    accuracy_standards = st.number_input(translate_text("Accuracy Standards", selected_language), min_value=1,
+                                         max_value=10, value=5, key="gripper_accuracy_standards")
+
+
+    # Calculate overall ISO weight dynamically
+    def calculate_iso_weight(Icompliance, Isafety, Iaccuracy):
+        weights = {"Compliance Standards": 0.4, "Material Safety": 0.3, "Accuracy Standards": 0.3}
+        return round(Icompliance * weights["Compliance Standards"] + Isafety * weights["Material Safety"] +
+                     Iaccuracy * weights["Accuracy Standards"], 2)
+
+
+    iso_weight = calculate_iso_weight(compliance_standards, material_safety, accuracy_standards)
+
+
+
+
+    # Safety-related sub-parameters
+    st.write(translate_text("Enter values for Safety-related parameters (1-10):", selected_language))
+    impact_resistance = st.number_input(translate_text("Impact Resistance", selected_language), min_value=1,
+                                           max_value=10,
+                                           value=5, key="gripper_Impact_Resistance")
+    fail_safe = st.number_input(translate_text("Fail-Safe Mechanisms", selected_language), min_value=1,
+                                      max_value=10, value=5, key="gripper_fail_safe")
+
+    force_limitation = st.number_input(translate_text("Force Limitation", selected_language), min_value=1,
+                                         max_value=10, value=5, key="gripper_force_limitation")
+
+
+    # Calculate overall safety weight dynamically
+    def calculate_safety_weight(gimpact, gfail_safe, gforce_limitation):
+        weights = {"Impact Resistance": 0.4, "Fail-Safe Mechanisms": 0.3, "Force Limitation": 0.3}
+        return round(gimpact * weights["Impact Resistance"] + gfail_safe * weights["Fail-Safe Mechanisms"] +
+                     gforce_limitation * weights["Force Limitation"], 2)
+
+
+    safety_weight = calculate_safety_weight(impact_resistance, fail_safe, force_limitation)
+
+    # performance-related sub-parameters
+    st.write(translate_text("Enter values for Performance-related parameters (1-10):", selected_language))
+    grip_precision = st.number_input(translate_text("Precision", selected_language), min_value=1,
+                                        max_value=10,
+                                        value=5, key="gripper_precision")
+    grip_response_time = st.number_input(translate_text("Response Time", selected_language), min_value=1,
+                                max_value=10, value=5, key="gripper_response_time")
+
+    grip_endurance = st.number_input(translate_text("Endurance", selected_language), min_value=1,
+                                       max_value=10, value=5, key="gripper_endurance")
+
+
+    # Calculate overall performance weight dynamically
+    def calculate_performance_weight(gprecision, gresponse, gendurance):
+        weights = {"Precision": 0.4, "Response Time": 0.3, "Endurance": 0.3}
+        return round(gprecision * weights["Precision"] + gresponse * weights["Response Time"] +
+                     gendurance * weights["Endurance"], 2)
+
+
+    performance_weight = calculate_performance_weight(grip_precision, grip_response_time, grip_endurance)
+
+
+
     # Image and Research Paper URL inputs
     image = st.file_uploader(translate_text("Upload Image", selected_language), type=['jpg', 'jpeg', 'png'],
                              key="gripper_image")
     research_url = st.text_input(translate_text("Research Paper URL", selected_language), key="gripper_url")
 
-    # Main factors
-    iso = st.number_input(translate_text("ISO Compliance", selected_language), min_value=1, max_value=10, value=7,
-                          key="gripper_iso")
-    safety = st.number_input(translate_text("Safety", selected_language), min_value=1, max_value=10, value=8,
-                             key="gripper_safety")
-    performance = st.number_input(translate_text("Performance", selected_language), min_value=1, max_value=10, value=7,
-                                  key="gripper_performance")
+
 
     # Add Button
     if st.button(translate_text("Add Gripper", selected_language), key="add_gripper"):
@@ -193,9 +255,9 @@ with tab1:
             new_entry = {
                 "Name": name,
                 "Cost": cost_weight,  # Calculated cost weight
-                "ISO Compliance": iso,
-                "Safety": safety,
-                "Performance": performance,
+                "ISO Compliance": iso_weight,
+                "Safety": safety_weight,
+                "Performance": performance_weight,
                 "Image": image_path,
                 "Research URL": research_url
             }
