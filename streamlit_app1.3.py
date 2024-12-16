@@ -97,14 +97,40 @@ def add_entry(file_path, df, entry):
     return df
 
 
+
+
+
 # Function to plot visualizations
 def plot_visualizations(df, title):
-    fig, ax = plt.subplots(figsize=(10, 6))
-    melted_df = df.melt(id_vars=['Name'], value_vars=['Cost', 'ISO Compliance', 'Safety', 'Performance'],
+    # Check if DataFrame is empty
+    if df.empty:
+        st.warning("No data available for visualization.")
+        return
+
+    # Define the relevant columns to be visualized
+    relevant_columns = ['Name', 'Cost', 'ISO Compliance', 'Safety', 'Performance']
+
+    # Ensure relevant columns exist
+    missing_columns = [col for col in relevant_columns if col not in df.columns]
+    if missing_columns:
+        st.warning(f"Missing columns for visualization: {', '.join(missing_columns)}")
+        return
+
+    # Melt the DataFrame for visualization
+    melted_df = df.melt(id_vars=['Name'], value_vars=relevant_columns[1:],
                         var_name='Factors', value_name='Scores')
-    sns.barplot(data=melted_df, x='Factors', y='Scores', hue='Name', ax=ax)
+
+    # Check if melted DataFrame is empty
+    if melted_df.empty:
+        st.warning("No valid scores available for visualization.")
+        return
+
+    # Create the bar plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(data=melted_df, x='Factors', y='Scores', hue='Name', ax=ax, palette='viridis')
     ax.set_title(title)
     st.pyplot(fig)
+
 
 
 # Streamlit app
@@ -149,51 +175,68 @@ with tab1:
 
     # Cost-related sub-parameters
     st.write(translate_text("Enter values for cost-related parameters (1-10):", selected_language))
-    material_cost = st.number_input(translate_text("Material Cost", selected_language), min_value=1, max_value=10,
+
+    grip_material = st.number_input(translate_text("Gripper Material", selected_language), min_value=1, max_value=10,
                                     value=5, key="gripper_material_cost")
-    manufacturing_cost = st.number_input(translate_text("Manufacturing Cost", selected_language), min_value=1,
-                                         max_value=10, value=5, key="gripper_manufacturing_cost")
-    maintenance_cost = st.number_input(translate_text("Maintenance Cost", selected_language), min_value=1, max_value=10,
-                                       value=5, key="gripper_maintenance_cost")
-    energy_consumption = st.number_input(translate_text("Energy Consumption", selected_language), min_value=1,
-                                         max_value=10, value=5, key="gripper_energy_cost")
+
+    grip_type = st.number_input(translate_text("Gripper Type", selected_language), min_value=1, max_value=10,
+                                    value=5, key="gripper_type")
+
+    actuation_mechanism = st.number_input(translate_text("Gripper Actuation Mechanism", selected_language), min_value=1,
+                                         max_value=10, value=5, key="gripper_actuation")
+    payload_capacity = st.number_input(translate_text("Gripper Payload Capacity", selected_language), min_value=1, max_value=10,
+                                       value=5, key="gripper_payload")
+
+    grip_durability = st.number_input(translate_text("Gripper Durability", selected_language), min_value=1,
+                                       max_value=10,
+                                       value=5, key="gripper_durability")
+    control_systems = st.number_input(translate_text("Gripper Control Systems", selected_language), min_value=1,
+                                      max_value=10,
+                                      value=5, key="gripper_controls")
+    customization_capacity = st.number_input(translate_text("Gripper Customization", selected_language), min_value=1,
+                                         max_value=10, value=5, key="gripper_customization")
 
 
     # Calculate overall cost weight dynamically
-    def calculate_cost_weight(material, manufacturing, maintenance, energy):
-        weights = {"Material Cost": 0.4, "Manufacturing Cost": 0.3, "Maintenance Cost": 0.2, "Energy Consumption": 0.1}
-        return round(material * weights["Material Cost"] + manufacturing * weights["Manufacturing Cost"] +
-                     maintenance * weights["Maintenance Cost"] + energy * weights["Energy Consumption"], 2)
+    def calculate_cost_weight(material, gtype, actuation, payload, durability, controls, customization):
+        weights = {"Gripper Material": 0.143,"Gripper Type" : 0.143, "Gripper Actuation Mechanism": 0.143, "Gripper Payload Capacity": 0.143, "Gripper Durability": 0.143,"Gripper Control Systems":0.143, "Gripper Customization": 0.142}
+        return round(material * weights["Gripper Material"] + gtype * weights["Gripper Type"]+ actuation * weights["Gripper Actuation Mechanism"] +
+                     payload * weights["Gripper Payload Capacity"] + durability * weights["Gripper Durability"] + controls * weights["Gripper Control Systems"] + customization * weights["Gripper Customization"], 2)
 
 
-    cost_weight = calculate_cost_weight(material_cost, manufacturing_cost, maintenance_cost, energy_consumption)
+    cost_weight = calculate_cost_weight(grip_material, grip_type, actuation_mechanism, payload_capacity, grip_durability, control_systems, customization_capacity)
 
 
     # ISO-related sub-parameters
     st.write(translate_text("Enter values for ISO-related parameters (1-10):", selected_language))
-    compliance_standards = st.number_input(translate_text("Compliance Standards", selected_language), min_value=1, max_value=10,
+    force_lim_features = st.number_input(translate_text("Force Limiting Features", selected_language), min_value=1, max_value=10,
                                     value=5, key="gripper_Compliance_Standards")
-    material_safety = st.number_input(translate_text("Material Safety", selected_language), min_value=1,
-                                         max_value=10, value=5, key="material_safety")
+    surf_mat = st.number_input(translate_text("Surface Material", selected_language), min_value=1,
+                                         max_value=10, value=5, key="gripper_surface_material")
 
     accuracy_standards = st.number_input(translate_text("Accuracy Standards", selected_language), min_value=1,
                                          max_value=10, value=5, key="gripper_accuracy_standards")
+    ctrl_algo = st.number_input(translate_text("Control Algorithm", selected_language), min_value=1,
+                                         max_value=10, value=5, key="gripper_control_algorithm")
+    mon_syst = st.number_input(translate_text("Monitoring Systems", selected_language), min_value=1,
+                                         max_value=10, value=5, key="gripper_monitoring_systems")
 
 
     # Calculate overall ISO weight dynamically
-    def calculate_iso_weight(Icompliance, Isafety, Iaccuracy):
-        weights = {"Compliance Standards": 0.4, "Material Safety": 0.3, "Accuracy Standards": 0.3}
-        return round(Icompliance * weights["Compliance Standards"] + Isafety * weights["Material Safety"] +
-                     Iaccuracy * weights["Accuracy Standards"], 2)
+    def calculate_iso_weight(iforce_lim, isurf_mat, iaccu_std, ictrl_algo, imon_syst):
+        weights = {"Force Limiting Features": 0.2, "Surface Material": 0.2, "Accuracy Standards": 0.2, "Control Algorithm":0.2,"Monitoring Systems" :0.2 }
+        return round(iforce_lim * weights["Force Limiting Features"] + isurf_mat * weights["Surface Material"] +
+                     iaccu_std * weights["Accuracy Standards"]+ ictrl_algo * weights["Control Algorithm"]+ imon_syst * weights["Monitoring Systems"], 2)
 
 
-    iso_weight = calculate_iso_weight(compliance_standards, material_safety, accuracy_standards)
+    iso_weight = calculate_iso_weight(force_lim_features, surf_mat,  accuracy_standards, ctrl_algo, mon_syst)
 
 
 
 
     # Safety-related sub-parameters
     st.write(translate_text("Enter values for Safety-related parameters (1-10):", selected_language))
+
     impact_resistance = st.number_input(translate_text("Impact Resistance", selected_language), min_value=1,
                                            max_value=10,
                                            value=5, key="gripper_Impact_Resistance")
@@ -202,37 +245,49 @@ with tab1:
 
     force_limitation = st.number_input(translate_text("Force Limitation", selected_language), min_value=1,
                                          max_value=10, value=5, key="gripper_force_limitation")
+    comp_design = st.number_input(translate_text("Compliant Design", selected_language), min_value=1,
+                                       max_value=10, value=5, key="gripper_compliant_design")
 
 
     # Calculate overall safety weight dynamically
-    def calculate_safety_weight(gimpact, gfail_safe, gforce_limitation):
-        weights = {"Impact Resistance": 0.4, "Fail-Safe Mechanisms": 0.3, "Force Limitation": 0.3}
+    def calculate_safety_weight(gimpact, gfail_safe, gforce_limitation, gcomp_design):
+        weights = {"Impact Resistance": 0.25, "Fail-Safe Mechanisms": 0.25, "Force Limitation": 0.25, "Compliant Design" : 0.25 }
         return round(gimpact * weights["Impact Resistance"] + gfail_safe * weights["Fail-Safe Mechanisms"] +
-                     gforce_limitation * weights["Force Limitation"], 2)
+                     gforce_limitation * weights["Force Limitation"] +  gcomp_design * weights["Compliant Design"], 2)
 
 
-    safety_weight = calculate_safety_weight(impact_resistance, fail_safe, force_limitation)
+    safety_weight = calculate_safety_weight(impact_resistance, fail_safe, force_limitation, comp_design)
+
 
     # performance-related sub-parameters
     st.write(translate_text("Enter values for Performance-related parameters (1-10):", selected_language))
+
+    grip_versatility = st.number_input(translate_text("Grip Versatility", selected_language), min_value=1,
+                                     max_value=10,
+                                     value=5, key="gripper_versatility")
+
     grip_precision = st.number_input(translate_text("Precision", selected_language), min_value=1,
                                         max_value=10,
                                         value=5, key="gripper_precision")
+
     grip_response_time = st.number_input(translate_text("Response Time", selected_language), min_value=1,
                                 max_value=10, value=5, key="gripper_response_time")
 
     grip_endurance = st.number_input(translate_text("Endurance", selected_language), min_value=1,
                                        max_value=10, value=5, key="gripper_endurance")
 
+    grip_env_adpt = st.number_input(translate_text("Environmental Adaptability", selected_language), min_value=1,
+                                     max_value=10, value=5, key="gripper_adaptability")
+
 
     # Calculate overall performance weight dynamically
-    def calculate_performance_weight(gprecision, gresponse, gendurance):
-        weights = {"Precision": 0.4, "Response Time": 0.3, "Endurance": 0.3}
-        return round(gprecision * weights["Precision"] + gresponse * weights["Response Time"] +
-                     gendurance * weights["Endurance"], 2)
+    def calculate_performance_weight(gversatility, gprecision, gresponse, gendurance, gadaptability):
+        weights = {"Grip Versatility": 0.2, "Precision": 0.2, "Response Time": 0.2, "Endurance": 0.2, "Environmental Adaptability": 0.2}
+        return round(gversatility * weights["Grip Versatility"] + gprecision * weights["Precision"] + gresponse * weights["Response Time"] +
+                     gendurance * weights["Endurance"] + gadaptability * weights["Environmental Adaptability"], 2)
 
 
-    performance_weight = calculate_performance_weight(grip_precision, grip_response_time, grip_endurance)
+    performance_weight = calculate_performance_weight(grip_versatility, grip_precision, grip_response_time, grip_endurance, grip_env_adpt)
 
 
 
@@ -506,4 +561,3 @@ with tab3:
         if 'Research URL' in row and pd.notna(row['Research URL']):  # Check if Research URL exists and is not empty
             st.write(f"[Research Paper]({row['Research URL']})")
         st.write("---")
-
